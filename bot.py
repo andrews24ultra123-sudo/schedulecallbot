@@ -6,28 +6,29 @@ import httpx
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-# === HARD-CODED CONFIG ===
+# === FULLY HARD-CODED CONFIG ===
 
 TOKEN = "8259780420:AAFxiZbMhnYfgCcwhselQiCTRKodZaZnooU"
-DEFAULT_CHAT_ID = -1001819726736
+CHAT_ID = -1001819726736
 
-API_BASE = f"https://api.telegram.org/bot{TOKEN}"
+# Fully hardcoded API base URL (no formatting)
+API_URL_SEND_MESSAGE = "https://api.telegram.org/bot8259780420:AAFxiZbMhnYfgCcwhselQiCTRKodZaZnooU/sendMessage"
+
 TZ = ZoneInfo("Asia/Singapore")
 
 
 async def send_message(text: str):
     """
-    Send a text message to the Telegram group.
+    Send a text message directly to the Telegram group.
     """
-    url = f"{API_BASE}/sendMessage"
     payload = {
-        "chat_id": DEFAULT_CHAT_ID,
+        "chat_id": CHAT_ID,
         "text": text,
     }
 
     async with httpx.AsyncClient() as client:
         try:
-            resp = await client.post(url, data=payload, timeout=10)
+            resp = await client.post(API_URL_SEND_MESSAGE, data=payload, timeout=10)
             if resp.status_code != 200:
                 print("Failed to send message:", resp.status_code, resp.text)
             else:
@@ -45,18 +46,18 @@ async def job_sunpoll():
 
 
 async def main():
-    print("Bot starting up at", datetime.now(TZ))
+    print("Bot started at", datetime.now(TZ))
 
     scheduler = AsyncIOScheduler(timezone=TZ)
 
-    # Every Friday at 23:00 (11 PM) Asia/Singapore
+    # Every Friday 11pm SGT
     scheduler.add_job(
         job_cgpoll,
         CronTrigger(day_of_week="fri", hour=23, minute=0),
         name="Friday CG Poll"
     )
 
-    # Every Sunday at 14:00 (2 PM) Asia/Singapore
+    # Every Sunday 2pm SGT
     scheduler.add_job(
         job_sunpoll,
         CronTrigger(day_of_week="sun", hour=14, minute=0),

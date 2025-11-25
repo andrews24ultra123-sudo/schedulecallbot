@@ -11,7 +11,7 @@ from apscheduler.triggers.cron import CronTrigger
 TOKEN = "8259780420:AAFxiZbMhnYfgCcwhselQiCTRKodZaZnooU"
 CHAT_ID = -1001819726736
 
-# Fully hardcoded API base URL (no formatting)
+# Fully hardcoded API URL for sendMessage
 API_URL_SEND_MESSAGE = "https://api.telegram.org/bot8259780420:AAFxiZbMhnYfgCcwhselQiCTRKodZaZnooU/sendMessage"
 
 TZ = ZoneInfo("Asia/Singapore")
@@ -21,6 +21,10 @@ async def send_message(text: str):
     """
     Send a text message directly to the Telegram group.
     """
+    if not text or text.strip() == "":
+        print("ERROR — Attempted to send empty message. Skipped.")
+        return
+
     payload = {
         "chat_id": CHAT_ID,
         "text": text,
@@ -50,18 +54,35 @@ async def main():
 
     scheduler = AsyncIOScheduler(timezone=TZ)
 
-    # Every Friday 11pm SGT
+    # === WEDNESDAY JOBS ===
+    # Every Wednesday 17:55 (5:55 PM) SGT -> /cgpoll
+    scheduler.add_job(
+        job_cgpoll,
+        CronTrigger(day_of_week="wed", hour=17, minute=55),
+        name="Wednesday 5:55pm CG Poll"
+    )
+
+    # Every Wednesday 17:57 (5:57 PM) SGT -> /sunpoll
+    scheduler.add_job(
+        job_sunpoll,
+        CronTrigger(day_of_week="wed", hour=17, minute=57),
+        name="Wednesday 5:57pm Sun Poll"
+    )
+
+    # === FRIDAY JOB ===
+    # Every Friday 23:00 (11 PM) SGT -> /cgpoll
     scheduler.add_job(
         job_cgpoll,
         CronTrigger(day_of_week="fri", hour=23, minute=0),
-        name="Friday CG Poll"
+        name="Friday 11pm CG Poll"
     )
 
-    # Every Sunday 2pm SGT
+    # === SUNDAY JOB ===
+    # Every Sunday 14:00 (2 PM) SGT -> /sunpoll
     scheduler.add_job(
         job_sunpoll,
         CronTrigger(day_of_week="sun", hour=14, minute=0),
-        name="Sunday Sun Poll"
+        name="Sunday 2pm Sun Poll"
     )
 
     scheduler.start()
